@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Particle Effect</title>
+	<style>
+		*, *::after, *::before {
+			padding: 0;
+			margin: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			height: 100vh;
+			overflow: hidden;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+</body>
+
+	<script>
+		var canvas = document.querySelector('#canvas');
+		var ctx = canvas.getContext('2d');
+		canvas.width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+		canvas.height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
+		function Particle () {
+			this.x = random(0, canvas.width);
+			this.y = random(0, canvas.height);
+			this.r = random(1, 2);
+
+			this.dx = random(-3, 3);
+			this.dy = random(-3, 3);
+			this.color = 'rgba('+ Math.floor(random(0, 255)) +','+ Math.floor(random(0, 255)) +','+ Math.floor(random(0, 255)) +','+ random(0, 1) +')';
+			Particle.instanceList.push(this);
+
+
+		}
+
+		Particle.instanceList = [];
+
+		Particle.prototype.update = function() {
+			if (this.tX && this.tY) {
+				var tempX = this.x;
+				var tempY = this.y;
+				
+				this.dx = (this.tX - this.x) / 50;
+				this.dy = (this.tY - this.y) / 50;
+
+				this.x += this.dx;
+				this.y += this.dy;
+
+				var distance = Math.sqrt(Math.pow(this.x - this.tX, 2) + Math.pow(this.y - this.tY, 2));
+
+				if (distance > 50) {
+					this.x = tempX;
+					this.y = tempY;
+				}
+				if (this.x < 0) {
+					this.dx = - this.dx;
+				}
+				if (this.x > canvas.width) {
+					this.dx = - this.dx;
+				}
+				if (this.y < 0) {
+					this.dy = - this.dy;
+				}
+				if (this.y > canvas.height) {
+					this.dy = - this.dy;
+				}
+				return;
+			}
+			this.x += this.dx;
+			this.y += this.dy;
+
+			if (this.x < 0) {
+				this.dx = - this.dx;
+			}
+			if (this.x > canvas.width) {
+				this.dx = - this.dx;
+			}
+			if (this.y < 0) {
+				this.dy = - this.dy;
+			}
+			if (this.y > canvas.height) {
+				this.dy = - this.dy;
+			}
+
+
+		}
+
+		Particle.prototype.render = function() {
+			ctx.save();
+			ctx.beginPath();
+			ctx.fillStyle = this.color;
+			ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI, true);
+			ctx.fill();
+			ctx.closePath();
+			ctx.restore();
+		}
+
+		~function () {
+			var timmer = null;
+			canvas.onmousemove = function(e) {
+				Particle.instanceList.forEach(function(item) {
+					var eX = e.clientX;
+					var eY = e.clientY;
+					var distance = Math.sqrt(Math.pow(item.x - eX, 2) + Math.pow(item.y - eY, 2));
+					if (distance < 80) {
+						item.tX = eX;
+						item.tY = eY;
+					}
+					if (distance >= 80 && distance <= 100) {
+						item.tX = null;
+						item.tY = null;
+						item.dx = random(-3, 3);
+						item.dy = random(-3, 3);
+					}
+				});
+			}
+		}();
+
+		function random (a, b) {
+			return Math.random() * (b - a) + a;
+		}
+
+		Particle.new = function(n) {
+			for (var i = 0; i < n; i++) {
+				new Particle();
+			}
+		}
+
+		Particle.new(50);
+
+		setInterval(function() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			Particle.instanceList.forEach(function(item, index) {
+				var list = Particle.instanceList;
+				item.update();
+				item.render();
+				for (var i = index + 1; i < list.length; i++) {
+					var distance = Math.sqrt(Math.pow(item.x - list[i].x, 2) + Math.pow(item.y - list[i].y, 2));
+					if (distance < 100) {
+						ctx.save();
+						ctx.beginPath();
+						ctx.moveTo(item.x, item.y);
+						ctx.lineTo(list[i].x, list[i].y);
+						ctx.closePath();
+						ctx.strokeStyle = 'rgba(55, 55, 55, 1)';
+						ctx.globalAlpha = (100 - distance) / 200;
+						ctx.stroke();
+						ctx.restore();
+					} 
+				}
+			});
+		}, 20);
+	</script>
+</html>
